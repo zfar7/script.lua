@@ -1,0 +1,74 @@
+-- Configurações
+local tempoEntreMensagens = {10, 20}  -- Intervalo aleatório entre mensagens
+local tempoEntreAcoes = {15, 30}  -- Intervalo aleatório entre interações
+local mensagens = {
+    "Contas de Blox Fruits? Apenas com o SirMadri!",
+    "As melhores contas na GGMAX!",
+    "gg/bloxemporium",
+    "Garanta suas novas frutas na gg/bloxemporium!",
+    "gg/bloxemporium"
+}
+
+-- Função para gerar um tempo aleatório dentro do intervalo
+local function intervaloAleatorio(intervalo)
+    return math.random(intervalo[1], intervalo[2])
+end
+
+-- Função para enviar uma mensagem no chat
+local ultimaMensagem = ""
+local function enviarMensagem()
+    if #mensagens == 0 then return end
+    local mensagem
+    repeat
+        mensagem = mensagens[math.random(#mensagens)]
+    until mensagem ~= ultimaMensagem -- Evita repetição da última mensagem
+    
+    ultimaMensagem = mensagem
+    game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(mensagem, "All")
+end
+
+-- Função para enviar um pedido de amizade
+local function enviarPedidoAmizade(jogador)
+    if jogador and jogador ~= game.Players.LocalPlayer and not game.Players.LocalPlayer:IsFriendsWith(jogador.UserId) then
+        if jogador.DisplayName ~= "BloxEmporium" then
+            game.Players.LocalPlayer:RequestFriendship(jogador)
+        end
+    end
+end
+
+-- Função para aceitar pedidos de amizade automaticamente
+local function aceitarPedidosAmizade()
+    while task.wait(5) do
+        for _, jogador in ipairs(game.Players:GetPlayers()) do
+            if jogador ~= game.Players.LocalPlayer and not game.Players.LocalPlayer:IsFriendsWith(jogador.UserId) then
+                game.Players.LocalPlayer:RequestFriendship(jogador)
+            end
+        end
+    end
+end
+
+-- Função principal do script
+local function rodarScript()
+    task.spawn(aceitarPedidosAmizade)
+    
+    while task.wait(intervaloAleatorio(tempoEntreMensagens)) do
+        enviarMensagem()
+        
+        task.wait(intervaloAleatorio(tempoEntreAcoes))
+        local jogadores = game.Players:GetPlayers()
+        if #jogadores > 1 then
+            local jogadorEscolhido = jogadores[math.random(#jogadores)]
+            enviarPedidoAmizade(jogadorEscolhido)
+        end
+    end
+end
+
+-- Verifica se o jogo e o LocalPlayer estão carregados antes de iniciar
+local function esperarCarregamento()
+    while not game:IsLoaded() or not game.Players.LocalPlayer do
+        task.wait(1)
+    end
+    rodarScript()
+end
+
+task.spawn(esperarCarregamento)
